@@ -8,6 +8,12 @@
   justify-content: space-between;
 }
 
+.header__links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
 .header__link {
   padding: 12px 32px;
   border-radius: 8px;
@@ -26,6 +32,11 @@
 .header__link:hover {
   color: #fff;
   background-color: #2a18ff;
+}
+
+.header__link_o {
+	background-color: transparent;
+	border: 1px solid #a6adff
 }
 
 @media (max-width: 1140px) {
@@ -48,9 +59,5 @@
 @media (max-width: 640px) {
   .header {
     padding: 24px 0 20px;
-  }
-
-  .header__link {
-    display: none;
   }
 }
