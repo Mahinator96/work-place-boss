@@ -184,117 +184,213 @@ const closeFilter = (btn, dropDown, classNameBtn, classNameDd) => {
 };
 
 const init = () => {
-  const filterForm = document.querySelector(".filter__form");
-  const vacanciesFilterBtn = document.querySelector(".vacancies__filter-btn");
-  const vacanciesFilter = document.querySelector(".vacancies__filter");
+	try {
+		const filterForm = document.querySelector(".filter__form");
+		const vacanciesFilterBtn = document.querySelector(".vacancies__filter-btn");
+		const vacanciesFilter = document.querySelector(".vacancies__filter");
+	
+		vacanciesFilterBtn.addEventListener("click", () => {
+			if (vacanciesFilterBtn.classList.contains("vacancies__filter-btn_active")) {
+				closeFilter(
+					vacanciesFilterBtn,
+					vacanciesFilter,
+					"vacancies__filter-btn_active",
+					"vacancies__filter_active",
+				);
+			} else {
+				openFilter(
+					vacanciesFilterBtn,
+					vacanciesFilter,
+					"vacancies__filter-btn_active",
+					"vacancies__filter_active",
+				);
+			}
+		});
+	
+		window.addEventListener("resize", () => {
+			if (vacanciesFilterBtn.classList.contains("vacancies__filter-btn_active")) {
+				// 1)
+				// vacanciesFilter.style.height = `${vacanciesFilter.scrollHeight}px`;
+				// 2)
+				closeFilter(
+					vacanciesFilterBtn,
+					vacanciesFilter,
+					"vacancies__filter-btn_active",
+					"vacancies__filter_active",
+				);
+			}
+		});
+	
+		// select city
+		const citySelect = document.querySelector("#city");
+		const cityChoices = new Choices(citySelect, {
+			itemSelectText: "",
+		});
+	
+		getData(
+			`${API_URL}${LOCATION_URL}`,
+			(locationData) => {
+				const locations = locationData.map((location) => ({
+					value: location,
+				}));
+				cityChoices.setChoices(locations, "value", "label", false);
+			},
+			(err) => {
+				console.log(err);
+			},
+		);
+	
+		// cards
+	
+		const urlWithParams = new URL(`${API_URL}${VACANCY_URL}`);
+	
+		urlWithParams.searchParams.set("limit", window.innerWidth < 768 ? 6 : 12);
+		urlWithParams.searchParams.set("page", 1);
+	
+		getData(urlWithParams, renderVacancies, renderError).then(() => {
+			lastUrl = urlWithParams;
+		});
+	
+		// modal
+	
+		cardsList.addEventListener("click", ({ target }) => {
+			const vacancyCard = target.closest(".vacancy");
+	
+			if (vacancyCard) {
+				const vacancyId = vacancyCard.dataset.id;
+				openModal(vacancyId);
+			}
+		});
+	
+		cardsList.addEventListener("keydown", ({ code, target }) => {
+			const vacancyCard = target.closest(".vacancy");
+			if ((code === "Enter" || code === "NumpadEnter") && vacancyCard) {
+				const vacancyId = vacancyCard.dataset.id;
+				openModal(vacancyId);
+				target.blur();
+			}
+		});
+	
+		// filter
+	
+		filterForm.addEventListener("submit", (event) => {
+			event.preventDefault();
+			const formData = new FormData(filterForm);
+	
+			const urlWithParam = new URL(`${API_URL}${VACANCY_URL}`);
+	
+			formData.forEach((value, key) => {
+				urlWithParam.searchParams.append(key, value);
+			});
+	
+			getData(urlWithParam, renderVacancies, renderError)
+				.then(() => {
+					lastUrl = urlWithParam;
+				})
+				.then(() => {
+					closeFilter(
+						vacanciesFilterBtn,
+						vacanciesFilter,
+						"vacancies__filter-btn_active",
+						"vacancies__filter_active",
+					);
+				});
+		});
+		
+	} catch (error) {
+		console.warn('Мы не на странице index.html')
+	}
 
-  vacanciesFilterBtn.addEventListener("click", () => {
-    if (vacanciesFilterBtn.classList.contains("vacancies__filter-btn_active")) {
-      closeFilter(
-        vacanciesFilterBtn,
-        vacanciesFilter,
-        "vacancies__filter-btn_active",
-        "vacancies__filter_active",
-      );
-    } else {
-      openFilter(
-        vacanciesFilterBtn,
-        vacanciesFilter,
-        "vacancies__filter-btn_active",
-        "vacancies__filter_active",
-      );
-    }
-  });
+	try {
+		const validationForm = (form) => {
+			const validate = new JustValidate(form, {
+				errorsContainer: document.querySelector('.employer__error'),
+				errorFieldStyle: {
+					border: '1px solid red'
+				},
+				errorFieldCssClass: ['invalid'],
+			});	
 
-  window.addEventListener("resize", () => {
-    if (vacanciesFilterBtn.classList.contains("vacancies__filter-btn_active")) {
-      // 1)
-      // vacanciesFilter.style.height = `${vacanciesFilter.scrollHeight}px`;
-      // 2)
-      closeFilter(
-        vacanciesFilterBtn,
-        vacanciesFilter,
-        "vacancies__filter-btn_active",
-        "vacancies__filter_active",
-      );
-    }
-  });
+			validate
+				.addField('#logo', [
+					{rule: 'minFilesCount', value: 1, errorMessage: 'Добавьте логотип'},
+					{	
+						rule: 'files',
+						value: {
+							files: {
+								extensions: ['jpeg', 'png', 'jpg'],
+								maxSize: '102400',
+								maxSize: '1000',
+								types: ['image/jpeg', 'image/png']
+							},
+					},
+						errorMessage: 'Размер больше 100 Кб',
+				},
+				])
+				.addField('#company', [
+					{
+						rule: 'required', 
+						errorMessage: 'Заполните название компании', 
+					},
+				])
+				.addField('#title', [
+					{rule: 'required', errorMessage: 'Заполните название вакансии'},
+				])
+				.addField('#salary', [
+					{rule: 'required', errorMessage: 'Заполните заработную плату'},
+				])
+				.addField('#location', [
+					{rule: 'required', errorMessage: 'Заполните город'},
+				])
+				.addField('#email', [
+					{rule: 'required', errorMessage: 'Заполните Email'},
+				])
+				.addField('#description', [
+					{rule: 'required', errorMessage: 'Заполните описание'},
+				])
+				.addRequiredGroup('#format', 'Выберите формат')
+				.addRequiredGroup('#experience', 'Выберите опыт')
+				.addRequiredGroup('#type', 'Выберите занятость')
+		};
 
-  // select city
-  const citySelect = document.querySelector("#city");
-  const cityChoices = new Choices(citySelect, {
-    itemSelectText: "",
-  });
+		const fileController = () => {
+			const file = document.querySelector('.file');
+			const preview = file.querySelector('.file__preview');
+			const input = file.querySelector('.file__input');
 
-  getData(
-    `${API_URL}${LOCATION_URL}`,
-    (locationData) => {
-      const locations = locationData.map((location) => ({
-        value: location,
-      }));
-      cityChoices.setChoices(locations, "value", "label", false);
-    },
-    (err) => {
-      console.log(err);
-    },
-  );
+			input.addEventListener('change', (e) => {
+				// console.log(e.target.files);
+				if (e.target.files.length > 0) {
+					const src = URL.createObjectURL(e.target.files[0]);
 
-  // cards
+					file.classList.add('file_active');
+					preview.src = src;
+					preview.style.display = 'block'
+				} else {
+					file.classList.remove('file_active');
+					preview.src = '';
+					preview.style.display = 'none'
+				}
+			});
+		};
 
-  const urlWithParams = new URL(`${API_URL}${VACANCY_URL}`);
+		const formController = () => {
+			const form = document.querySelector('.employer__form');
 
-  urlWithParams.searchParams.set("limit", window.innerWidth < 768 ? 6 : 12);
-  urlWithParams.searchParams.set("page", 1);
+			validationForm(form);
 
-  getData(urlWithParams, renderVacancies, renderError).then(() => {
-    lastUrl = urlWithParams;
-  });
+			form.addEventListener('submit', (e) => {
+				e.preventDefault();
 
-  // modal
 
-  cardsList.addEventListener("click", ({ target }) => {
-    const vacancyCard = target.closest(".vacancy");
+			});
+		};
 
-    if (vacancyCard) {
-      const vacancyId = vacancyCard.dataset.id;
-      openModal(vacancyId);
-    }
-  });
-
-  cardsList.addEventListener("keydown", ({ code, target }) => {
-    const vacancyCard = target.closest(".vacancy");
-    if ((code === "Enter" || code === "NumpadEnter") && vacancyCard) {
-      const vacancyId = vacancyCard.dataset.id;
-      openModal(vacancyId);
-      target.blur();
-    }
-  });
-
-  // filter
-
-  filterForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const formData = new FormData(filterForm);
-
-    const urlWithParam = new URL(`${API_URL}${VACANCY_URL}`);
-
-    formData.forEach((value, key) => {
-      urlWithParam.searchParams.append(key, value);
-    });
-
-    getData(urlWithParam, renderVacancies, renderError)
-      .then(() => {
-        lastUrl = urlWithParam;
-      })
-      .then(() => {
-        closeFilter(
-          vacanciesFilterBtn,
-          vacanciesFilter,
-          "vacancies__filter-btn_active",
-          "vacancies__filter_active",
-        );
-      });
-  });
+		fileController();
+		formController();
+	} catch (error) {
+		console.warn('Мы не на странице employer.html')
+	}
 };
 
 init();
