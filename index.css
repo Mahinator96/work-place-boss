@@ -16,8 +16,3 @@
 @import "style/employer.css";
 @import "style/file.css";
 @import "style/radio.css";
-
-
-.invalid {
-	border: 1px solid #F00;
-}

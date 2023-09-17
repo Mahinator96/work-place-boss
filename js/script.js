@@ -1,4 +1,4 @@
-const API_URL = "https://workspace-methed.vercel.app/";
+const API_URL = "https://seemly-waiting-clam.glitch.me/";
 const LOCATION_URL = "api/locations";
 const VACANCY_URL = "api/vacancy";
 
@@ -344,6 +344,7 @@ const init = () => {
 				])
 				.addField('#email', [
 					{rule: 'required', errorMessage: 'Заполните Email'},
+					{rule: 'email', errorMessage: 'Введите корректный Email'}
 				])
 				.addField('#description', [
 					{rule: 'required', errorMessage: 'Заполните описание'},
@@ -351,6 +352,8 @@ const init = () => {
 				.addRequiredGroup('#format', 'Выберите формат')
 				.addRequiredGroup('#experience', 'Выберите опыт')
 				.addRequiredGroup('#type', 'Выберите занятость')
+
+			return validate;
 		};
 
 		const fileController = () => {
@@ -376,13 +379,36 @@ const init = () => {
 
 		const formController = () => {
 			const form = document.querySelector('.employer__form');
+			const employerError =	document.querySelector('.employer__error');
 
-			validationForm(form);
+			const validate = validationForm(form);
 
-			form.addEventListener('submit', (e) => {
+			form.addEventListener('submit', async (e) => {
 				e.preventDefault();
 
+				if (!validate.isValid) {
+					return;
+				}
 
+				try {
+					const formData = new FormData(form);
+
+					employerError.textContent = 'Отправка, подождите...';
+
+					const response = await fetch(`${API_URL}${VACANCY_URL}`, {
+						method: 'POST',
+						body: formData,
+					});
+	
+					if (response.ok) {
+						employerError.textContent = '';
+						window.location.href = 'index.html';
+					}
+				} catch (error) {
+					employerError.textContent = 'Произошла ошибка';
+					console.error(error);
+				}
+				
 			});
 		};
 
